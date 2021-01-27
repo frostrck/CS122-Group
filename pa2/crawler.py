@@ -1,6 +1,6 @@
 # CS122: Course Search Engine Part 1
 #
-# Your name(s)
+# Zachary Yung, Corry Ke
 #
 
 import re
@@ -19,8 +19,38 @@ INDEX_IGNORE = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
                     'topics', 'units', 'we', 'were', 'which', 'will', 'with',
                     'yet'])
 
+def process(parent_url, child_url):
+    '''
 
-### YOUR FUNCTIONS HERE
+    '''
+    parent_url = util.remove_fragment(parent_url) # DO WE DO THIS BEFORE UTIL.CONVERT_IF_RELATIVE_URL OR AFTER
+    child_url = util.remove_fragment(child_url)
+    url = util.convert_if_relative_url(parent_url, child_url)
+    request = util.get_request(url)
+    html = util.read_request(request)
+    soup = bs4.BeautifulSoup(html, "html5lib")
+
+    return soup
+
+def put_if(soup, count, num_pages_to_crawl):
+    '''
+
+    '''
+    links = soup.find_all("a")
+    for link in links:
+        absolute_link = util.convert_if_relative_url(starting_url, link)
+        if is_url_ok_to_follow(absolute_link, limiting_domain):
+            if count < num_pages_to_crawl:
+                url_queue.put(absolute_link)
+                count += 1
+
+def parse(soup, ):
+    '''
+
+    '''
+
+
+
 
 def go(num_pages_to_crawl, course_map_filename, index_filename):
     '''
@@ -35,12 +65,67 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
     Outputs:
         CSV file of the index
     '''
-
+    index = {}
+    
     starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
     limiting_domain = "classes.cs.uchicago.edu"
 
-    # YOUR CODE HERE
+    # Creating queue object to store URL's
+    url_queue = queue.Queue()
+
+    # Parsing through starting_url for URL's and seeding url_queue
+    soup = process(starting_url, starting_url)
+    links = soup.find_all("a")
+    count = 1
+    for link in links:
+        link = link["href"]
+        link = util.remove_fragment(link)
+        absolute_link = util.convert_if_relative_url(starting_url, link)
+        if util.is_url_ok_to_follow(absolute_link, limiting_domain):
+            if count < num_pages_to_crawl:
+                url_queue.put(absolute_link)
+                count += 1
+    
+    while count < num_pages_to_crawl:
+        pass
+
+
+    regex = r'\w+'
+    string_list = re.findall(regex, string)
+
+
+    # IGNORE
+    if url_queue.empty():
+        tags = soup.find_all("a")
+        for tag in tags:
+            url.queue.put(tag["href"])
+    else:
+        url = url_queue.get()
+        request = util.get_request(url)
+        html = util.read_request(request)
+        soup = bs4.BeautifulSoup(html, "html5lib")
+        tags = soup.find_all("a")
+        for tag in tags:
+            # Checking if URL is relative
+            if not util.is_absolute_url(url):
+                tag = util.convert_if_relative_url(url, tag)
+            url_queue.put(tag["href"])
+
+    # add seed
+    # parse it
+    # add children
+    # pop it
+
+    # dictionary
+    # words within course titles
+    # map a word to course identifier
+    # if the word is already in the key of the dictionary, you add the value (course identifier) to the key that is already existing into a list
+
+    # if the course is a subsequence, there is a list of the individual div tags that represent the sub-course and you have to parse through it 
+
+
+    # is_url_ok_to_follow and if you've already been to url
 
 
 if __name__ == "__main__":
