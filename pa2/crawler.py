@@ -50,8 +50,6 @@ def parse(soup, ):
     '''
 
 
-
-
 def go(num_pages_to_crawl, course_map_filename, index_filename):
     '''
     Crawl the college catalog and generate a CSV file with an index.
@@ -66,6 +64,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         CSV file of the index
     '''
     index = {}
+    processed_links = []
     
     starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
@@ -78,17 +77,61 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
     soup = process(starting_url, starting_url)
     links = soup.find_all("a")
     count = 1
+    ###
     for link in links:
         link = link["href"]
         link = util.remove_fragment(link)
         absolute_link = util.convert_if_relative_url(starting_url, link)
         if util.is_url_ok_to_follow(absolute_link, limiting_domain):
-            if count < num_pages_to_crawl:
+            if count < num_pages_to_crawl and absolute_link not in processed_links:
                 url_queue.put(absolute_link)
+                processed_links.append(absolute_link)
                 count += 1
+            elif count == num_pages_to_crawl:
+                break
+        ###
     
-    while count < num_pages_to_crawl:
-        pass
+    while not url_queue.empty():
+        url = url_queue.get()
+        request = util.get_request(url)
+        html = util.read_request(request)
+        soup = bs4.BeautifulSoup(html, "html5lib")
+
+        div_tags = soup.find_all("div", class_="courseblock main")
+        links = soup.find_all("a")
+
+        ###
+        for link in links:
+            link = link["href"]
+            link = util.remove_fragment(link)
+            absolute_link = util.convert_if_relative_url(starting_url, link)
+            if util.is_url_ok_to_follow(absolute_link, limiting_domain):
+                if count < num_pages_to_crawl and absolute_link not in processed_links:
+                    url_queue.put(absolute_link)
+                    processed_links.append(absolute_link)
+                    count += 1
+                elif count == num_pages_to_crawl:
+                    break
+        ###
+
+        if div_tags != []:
+            for div_tag in div_tags:
+                p_tags = div_tag.find_all("p")
+
+                for p_tag in p_tags:
+                    word_list = re.findall(regex, p_tag.text)
+
+                    if p_tag.has_attribute("courseblocktitle"):
+                        class_name = ' '.join([str(elem) for elem in string_list[:2]])
+
+                    for word in word_list:
+                        if word not in INDEX_IGNORE and word not in index:
+                            index[word] = [class_name]
+                        else:
+                            index[word].append(class_name)
+
+        # key_pair = ' '.join([str(elem) for elem in list]) where list is a list in the format ["ANTH", "20190"] and it turns it into "ANTH 20190"
+
 
 
     regex = r'\w+'
