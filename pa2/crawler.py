@@ -26,28 +26,75 @@ def process(parent_url, child_url):
     parent_url = util.remove_fragment(parent_url) # DO WE DO THIS BEFORE UTIL.CONVERT_IF_RELATIVE_URL OR AFTER
     child_url = util.remove_fragment(child_url)
     url = util.convert_if_relative_url(parent_url, child_url)
+    return url
+
+def request(url):
     request = util.get_request(url)
     html = util.read_request(request)
     soup = bs4.BeautifulSoup(html, "html5lib")
-
     return soup
 
-def put_if(soup, count, num_pages_to_crawl):
-    '''
 
+def parse(courseblockmains, index):
     '''
-    links = soup.find_all("a")
-    for link in links:
-        absolute_link = util.convert_if_relative_url(starting_url, link)
-        if is_url_ok_to_follow(absolute_link, limiting_domain):
-            if count < num_pages_to_crawl:
-                url_queue.put(absolute_link)
-                count += 1
+    
+    '''
+    regex = r'[\w-]+'
 
-def parse(soup, ):
-    '''
+    for div_tag in courseblockmains:
+        p_tags = div_tag.find_all("p")
+        for p_tag in p_tags:
+            if p_tag.has_attr('class') and (p_tag['class'][0] == 'courseblocktitle' or p_tag['class'][0] == 'courseblock subsequence'):
+                word_list = re.findall(regex, p_tag.text)
+                class_name = ' '.join([str(elem) for elem in word_list[:2]])
+                if '-' in class_name:
+                    parse_seq(class_name, word_list, index)
+                    continue
 
-    '''
+                update_index(word_list, index, class_name)
+
+def update_index(word_list, index, class_name):
+    for word in word_list:
+        if word in INDEX_IGNORE:
+            continue
+        if word not in index:
+            index[word] = [class_name]
+        else:
+            index[word].append(class_name)
+
+
+def parse_seq(class_name, word_list, index):
+    regex_seq = r'\w+'
+    seq = []
+    seq_name = re.findall(regex_seq, class_name)
+    dept = seq_name[0]
+    for i, word in enumerate(seq_name):
+        num = seq_name[i]
+        if num.isnumeric():
+            subsequence = dept + '' + num
+            seq.append(subsequence)
+    
+    for course in seq:
+        update_index(word_list, index, course)
+
+
+def process_links(parent_url, soup_links, processed_links, url_queue, num_pages_to_crawl=1000):
+    count = 0
+    for link in soup_links:
+        link = link.get('href')
+        if link is not None:
+            absolute_link = process(parent_url, link)
+            link = util.remove_fragment(link)
+            
+            if util.is_url_ok_to_follow(absolute_link, limiting_domain):
+                if count < num_pages_to_crawl and absolute_link not in processed_links:
+                    url_queue.put(absolute_link)
+                    processed_links.append(absolute_link)
+                    count += 1
+                elif count == num_pages_to_crawl:
+                    break
+
+    return count
 
 
 def go(num_pages_to_crawl, course_map_filename, index_filename):
@@ -74,86 +121,28 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
     url_queue = queue.Queue()
 
     # Parsing through starting_url for URL's and seeding url_queue
-    soup = process(starting_url, starting_url)
+    parent_url = process(starting_url, starting_url)
+    soup = request(parent_url)
     links = soup.find_all("a")
-    count = 1
-    ###
-    for link in links:
-        link = link["href"]
-        link = util.remove_fragment(link)
-        absolute_link = util.convert_if_relative_url(starting_url, link)
-        if util.is_url_ok_to_follow(absolute_link, limiting_domain):
-            if count < num_pages_to_crawl and absolute_link not in processed_links:
-                url_queue.put(absolute_link)
-                processed_links.append(absolute_link)
-                count += 1
-            elif count == num_pages_to_crawl:
-                break
-        ###
+    count = process_links(parent_url, links, processed_links, url_queue)
     
     while not url_queue.empty():
         url = url_queue.get()
-        request = util.get_request(url)
-        html = util.read_request(request)
-        soup = bs4.BeautifulSoup(html, "html5lib")
+        soup = request(url)
 
         div_tags = soup.find_all("div", class_="courseblock main")
         links = soup.find_all("a")
-
-        ###
-        for link in links:
-            link = link["href"]
-            link = util.remove_fragment(link)
-            absolute_link = util.convert_if_relative_url(starting_url, link)
-            if util.is_url_ok_to_follow(absolute_link, limiting_domain):
-                if count < num_pages_to_crawl and absolute_link not in processed_links:
-                    url_queue.put(absolute_link)
-                    processed_links.append(absolute_link)
-                    count += 1
-                elif count == num_pages_to_crawl:
-                    break
-        ###
+        process_links(url, links, processed_links, url_queue)
 
         if div_tags != []:
-            for div_tag in div_tags:
-                p_tags = div_tag.find_all("p")
-
-                for p_tag in p_tags:
-                    word_list = re.findall(regex, p_tag.text)
-
-                    if p_tag.has_attribute("courseblocktitle"):
-                        class_name = ' '.join([str(elem) for elem in string_list[:2]])
-
-                    for word in word_list:
-                        if word not in INDEX_IGNORE and word not in index:
-                            index[word] = [class_name]
-                        else:
-                            index[word].append(class_name)
+            parse(div_tags, index)
 
         # key_pair = ' '.join([str(elem) for elem in list]) where list is a list in the format ["ANTH", "20190"] and it turns it into "ANTH 20190"
 
 
 
-    regex = r'\w+'
-    string_list = re.findall(regex, string)
+    
 
-
-    # IGNORE
-    if url_queue.empty():
-        tags = soup.find_all("a")
-        for tag in tags:
-            url.queue.put(tag["href"])
-    else:
-        url = url_queue.get()
-        request = util.get_request(url)
-        html = util.read_request(request)
-        soup = bs4.BeautifulSoup(html, "html5lib")
-        tags = soup.find_all("a")
-        for tag in tags:
-            # Checking if URL is relative
-            if not util.is_absolute_url(url):
-                tag = util.convert_if_relative_url(url, tag)
-            url_queue.put(tag["href"])
 
     # add seed
     # parse it
@@ -172,20 +161,50 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
 
 if __name__ == "__main__":
-    usage = "python3 crawl.py <number of pages to crawl>"
-    args_len = len(sys.argv)
-    course_map_filename = "course_map.json"
-    index_filename = "catalog_index.csv"
-    if args_len == 1:
-        num_pages_to_crawl = 1000
-    elif args_len == 2:
-        try:
-            num_pages_to_crawl = int(sys.argv[1])
-        except ValueError:
-            print(usage)
-            sys.exit(0)
-    else:
-        print(usage)
-        sys.exit(0)
+    # usage = "python3 crawl.py <number of pages to crawl>"
+    # args_len = len(sys.argv)
+    # course_map_filename = "course_map.json"
+    # index_filename = "catalog_index.csv"
+    # if args_len == 1:
+    #     num_pages_to_crawl = 1000
+    # elif args_len == 2:
+    #     try:
+    #         num_pages_to_crawl = int(sys.argv[1])
+    #     except ValueError:
+    #         print(usage)
+    #         sys.exit(0)
+    # else:
+    #     print(usage)
+    #     sys.exit(0)
 
-    go(num_pages_to_crawl, course_map_filename, index_filename)
+    # go(num_pages_to_crawl, course_map_filename, index_filename)
+    index = {}
+    processed_links = []
+    
+    starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
+                    "/12200-1/new.collegecatalog.uchicago.edu/index.html")
+    limiting_domain = "classes.cs.uchicago.edu"
+
+    # Creating queue object to store URL's
+    url_queue = queue.Queue()
+    # Parsing through starting_url for URL's and seeding url_queue
+    parent_url = process(starting_url, starting_url)
+    soup = request(parent_url)
+    links = soup.find_all("a")
+    count = process_links(parent_url, links, processed_links, url_queue)
+    while not url_queue.empty():
+        url = url_queue.get()
+        soup = request(url)
+        div_tags = soup.find_all("div", class_="courseblock main")
+        links = soup.find_all("a")
+        process_links(url, links, processed_links, url_queue)
+
+        if div_tags != []:
+            parse(div_tags, index)
+    counter = 0 
+    for v in index.values():
+        for val in v:
+            counter += 1
+    
+    print(counter)
+
