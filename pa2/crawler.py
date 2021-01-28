@@ -207,3 +207,4 @@ if __name__ == "__main__":
     print(index)
 
     #THINGS TO DO: Make sure we go through Coursedesc too when parsing. Need to map courses to identifier when done. 
+    #If you want to see what index looks like, type python3 crawler.py in your terminal. Takes <2 min to run. 
