@@ -208,3 +208,4 @@ if __name__ == "__main__":
     
     print(counter)
 
+    #THINGS TO DO: Make sure we go through Coursedesc too when parsing. Need to map courses to identifier when done. 
