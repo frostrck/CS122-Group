@@ -89,7 +89,7 @@ def process_links(parent_url, soup_links, processed_links, url_queue, num_pages_
             if util.is_url_ok_to_follow(absolute_link, limiting_domain):
                 if count < num_pages_to_crawl and absolute_link not in processed_links:
                     url_queue.put(absolute_link)
-                    processed_links.append(absolute_link)
+                    processed_links.add(absolute_link)
                     count += 1
                 elif count == num_pages_to_crawl:
                     break
@@ -111,7 +111,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         CSV file of the index
     '''
     index = {}
-    processed_links = []
+    processed_links = set()
     
     starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
@@ -137,7 +137,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         if div_tags != []:
             parse(div_tags, index)
 
-        # key_pair = ' '.join([str(elem) for elem in list]) where list is a list in the format ["ANTH", "20190"] and it turns it into "ANTH 20190"
+       
 
 
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
     # go(num_pages_to_crawl, course_map_filename, index_filename)
     index = {}
-    processed_links = []
+    processed_links = set()
     
     starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
