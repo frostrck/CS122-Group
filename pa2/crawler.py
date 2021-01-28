@@ -78,8 +78,7 @@ def parse_seq(class_name, word_list, index):
         update_index(word_list, index, course)
 
 
-def process_links(parent_url, soup_links, processed_links, url_queue, num_pages_to_crawl=1000):
-    count = 0
+def process_links(parent_url, soup_links, processed_links, url_queue, count = 0, num_pages_to_crawl = 1000):
     for link in soup_links:
         link = link.get('href')
         if link is not None:
@@ -132,7 +131,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
         div_tags = soup.find_all("div", class_="courseblock main")
         links = soup.find_all("a")
-        process_links(url, links, processed_links, url_queue)
+        count = process_links(url, links, processed_links, url_queue, count = count)
 
         if div_tags != []:
             parse(div_tags, index)
@@ -185,22 +184,26 @@ if __name__ == "__main__":
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
     limiting_domain = "classes.cs.uchicago.edu"
 
-    # Creating queue object to store URL's
+    # # Creating queue object to store URL's
     url_queue = queue.Queue()
-    # Parsing through starting_url for URL's and seeding url_queue
+
     parent_url = process(starting_url, starting_url)
     soup = request(parent_url)
     links = soup.find_all("a")
     count = process_links(parent_url, links, processed_links, url_queue)
+    
     while not url_queue.empty():
         url = url_queue.get()
         soup = request(url)
+
         div_tags = soup.find_all("div", class_="courseblock main")
         links = soup.find_all("a")
-        process_links(url, links, processed_links, url_queue)
+        count = process_links(url, links, processed_links, url_queue, count = count)
 
         if div_tags != []:
             parse(div_tags, index)
+
+
     counter = 0 
     for v in index.values():
         for val in v:
