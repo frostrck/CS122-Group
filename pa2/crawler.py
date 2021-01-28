@@ -184,7 +184,7 @@ if __name__ == "__main__":
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
     limiting_domain = "classes.cs.uchicago.edu"
 
-    # # Creating queue object to store URL's
+    
     url_queue = queue.Queue()
 
     parent_url = process(starting_url, starting_url)
@@ -203,12 +203,7 @@ if __name__ == "__main__":
         if div_tags != []:
             parse(div_tags, index)
 
-
-    counter = 0 
-    for v in index.values():
-        for val in v:
-            counter += 1
     
-    print(counter)
+    print(index)
 
     #THINGS TO DO: Make sure we go through Coursedesc too when parsing. Need to map courses to identifier when done. 
