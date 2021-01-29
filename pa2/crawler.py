@@ -20,24 +20,6 @@ INDEX_IGNORE = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
                     'yet'])
 
 
-
-# def process(parent_url, child_url):
-#     '''
-#     Processes URL's into accessible format (removes fragments and converts
-#     relative URL'sto absolute URL's)
-
-#     Inputs:
-#         parent_url (str): URl that is parsed
-#         child_url (url): URL detected on a webpage
-
-#     Output:
-#         url (str): absolute URL without fragment
-#     '''
-#     parent_url = util.remove_fragment(parent_url) 
-#     child_url = util.remove_fragment(child_url) 
-#     url = util.convert_if_relative_url(parent_url, child_url)
-#     return url
-
 def process(url):
     '''
     Takes in an url and processes it into ansolute url and returns its soup.
@@ -192,7 +174,6 @@ def process_links(parent_url, soup_links, processed_links, url_queue, count = 0,
                     count += 1
                 elif count == num_pages_to_crawl:
                     break
-
     return count
 
 
@@ -236,20 +217,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         parse(div_tags, index)
 
 
-    # add seed
-    # parse it
-    # add children
-    # pop it
 
-    # dictionary
-    # words within course titles
-    # map a word to course identifier
-    # if the word is already in the key of the dictionary, you add the value (course identifier) to the key that is already existing into a list
-
-    # if the course is a subsequence, there is a list of the individual div tags that represent the sub-course and you have to parse through it 
-
-
-    # is_url_ok_to_follow and if you've already been to url
 
 
 if __name__ == "__main__":
@@ -299,16 +267,19 @@ if __name__ == "__main__":
         links = soup.find_all("a")
         count = process_links(url, links, processed_links, url_queue, count = count)
 
-        # Indexing words
         div_tags = soup.find_all("div")
         parse(div_tags, index, course_map_filename)
 
-    print(index['I/O'])
+
+    sorted_list = sorted(index.keys(), key=lambda x:x.lower())
+    lines = []
+    for ele in sorted_list:
+        num_list = index[ele]
+        for num in num_list:
+            lines.append(str(num) + ' | ' + ele)
+
+    with open('fileName.csv', 'w') as f:
+        for line in lines:
+            f.write(line + '\n')
 
 
-
-    
-
-
-    #THINGS TO DO: Make sure we go through Coursedesc too when parsing. Need to map courses to identifier when done. 
-    #If you want to see what index looks like, type python3 crawler.py in your terminal. Takes <2 min to run. 
