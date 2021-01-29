@@ -40,7 +40,10 @@ INDEX_IGNORE = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
 
 def process(url):
     '''
+    Takes in an url and processes it into ansolute url and returns its soup.
 
+    Input: 
+        url: (str) url
     '''
     url = util.remove_fragment(url) 
     request = util.get_request(url)
@@ -53,11 +56,15 @@ def process(url):
 
 def parse(div_tags, index, course_map_filename):
     '''
-    Parses through a div tags updates the output index
+    Parses through div tags with course info and updates the output index.
 
     Inputs:
-        div_tags (bs4 ResultSet, lst): div tags with "courseblock main" attribute
+        div_tags (bs4 ResultSet, lst): div tags with "courseblock main" or "courseblock subsequence" attribute
         index (dict): index to be updated
+        course_map_filename: the json file that maps a course title to the identifier
+    
+    Returns:
+        None
     '''
     regex = r'[a-zA-Z][-a-zA-Z0-9]*'
     regex_class = r'[\w-]+'
@@ -89,6 +96,17 @@ def parse(div_tags, index, course_map_filename):
 
 
 def course_identifier(course, course_map_filename):
+    '''
+    A fuinction that loads a json file and redirects course name 
+    to its identifier.
+
+    Inputs:
+        course: (str) course title
+        course_map_filename: json file
+    
+    Returns:
+        course ID
+    '''
     with open(course_map_filename) as f:
         data = json.load(f)
     return data[course]
@@ -104,6 +122,9 @@ def update_index(class_name, word_list, index):
         word_list (lst): list of words from specific tag
         index (dict): index that will be updated
         class_name (str): name of the class
+    
+    Returns:
+        None
     '''
     word_list = [word.lower() for word in word_list]
     for word in word_list:
@@ -116,6 +137,19 @@ def update_index(class_name, word_list, index):
 
 
 def parse_seq(class_name, word_list, index, course_map_filename):
+    '''
+    Function that will add each course in the sequence to the
+    sequence descriptions.
+
+    Inputs:
+        class_name: name of sequence
+        word_list: (str) words that appear in course description
+        index: (dict) our index dict that we modify
+        course_map_filename: JSON file that maps class name to IDs
+    
+    Returns: 
+        None
+    '''
     regex_seq = r'[a-zA-Z][-a-zA-Z0-9]+'
     seq = []
     seq_name = re.findall(regex_seq, class_name)
@@ -182,7 +216,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
     limiting_domain = "classes.cs.uchicago.edu"
 
-    # Creating queue object to store URL's
+
     url_queue = queue.Queue()
 
     # Parsing through starting_url for URL's and seeding url_queue
@@ -269,7 +303,7 @@ if __name__ == "__main__":
         div_tags = soup.find_all("div")
         parse(div_tags, index, course_map_filename)
 
-    print(len(index['international']) == len(set(index['international'])))
+    print(index['I/O'])
 
 
 
