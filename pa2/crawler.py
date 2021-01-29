@@ -52,6 +52,9 @@ def absolute(parent, child):
 #     return url
 
 def process(url):
+    '''
+
+    '''
     url = util.remove_fragment(url) 
     request = util.get_request(url)
     html = util.read_request(request)
@@ -69,21 +72,22 @@ def parse(div_tags, index):
         div_tags (bs4 ResultSet, lst): div tags with "courseblock main" attribute
         index (dict): index to be updated
     '''
-    regex = r'[\w-]+'
+    regex = r'[a-zA-Z][-a-zA-Z0-9]*'
+    regex_class = r'[\w-]+'
     
     for div_tag in div_tags:
         p_tags = div_tag.find_all("p")
         for p_tag in p_tags:
             if p_tag.has_attr('class'): # and (p_tag['class'][0] in ('courseblocktitle', 'courseblock subsequence')
-                word_list = re.findall(regex, p_tag.text)
+                word_list = re.findall(regex_class, p_tag.text)
                 if p_tag["class"][0] == "courseblocktitle":
-                    class_name = ' '.join([str(elem) for elem in word_list[:2]])
-                if '-' in class_name:
-                    parse_seq(class_name, word_list, index)
-                    continue
 
-                else:
-                    update_index(word_list, index, class_name)
+                    class_name = ' '.join([str(elem) for elem in word_list[:2]])
+                # if '-' in class_name:
+                    # parse_seq(class_name, word_list, index)
+                    # continue
+                word_list = re.findall(regex, p_tag.text)
+                update_index(word_list, index, class_name)
 
 def update_index(word_list, index, class_name):
     '''
@@ -96,14 +100,15 @@ def update_index(word_list, index, class_name):
     '''
     word_list = [word.lower() for word in word_list]
     for word in word_list:
-        if word not in index:
-            index[word] = [class_name]
-        else:
-            index[word].append(class_name)
+        if word not in INDEX_IGNORE:
+            if word not in index:
+                index[word] = [class_name]
+            else:
+                index[word].append(class_name)
 
 
 def parse_seq(class_name, word_list, index):
-    regex_seq = r'\w+'
+    regex_seq = r'[a-zA-Z][-a-zA-Z0-9]+'
     seq = []
     seq_name = re.findall(regex_seq, class_name)
     dept = seq_name[0]
@@ -182,7 +187,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         parent_url, soup = process(url)
 
         # Determining and appending course subsequence courses
-        div_tags = soup.find_all("div", class_="courseblock main")
+        div_tags = soup.find_all("div", class_=("courseblock main" or "courseblock subsequence"))
         div_tags_subsequence = []
         for div_tag in div_tags:
             subsequence = util.find_sequence(div_tag)
@@ -195,8 +200,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         count = process_links(url, links, processed_links, url_queue, count = count)
 
         # Indexing words
-        if div_tags != []:
-            parse(div_tags, index)
+        parse(div_tags, index)
 
 
     # add seed
