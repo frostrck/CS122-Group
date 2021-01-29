@@ -64,7 +64,7 @@ def parse(div_tags, index, course_map_filename):
                         course['title'] = ' '.join([str(elem) for elem in title[:2]])
                         course['name'] = re.findall(regex, p.text)
                     elif p['class'][0] == "courseblockdesc":
-                        desc = re.findall(regex_class, p.text)
+                        desc = re.findall(regex, p.text)
                         course['desc'] = desc
             word_list = course['name'] + course['desc']
 
