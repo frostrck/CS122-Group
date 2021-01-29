@@ -79,7 +79,7 @@ def parse(div_tags, index, course_map_filename):
 
 def course_identifier(course, course_map_filename):
     '''
-    A fuinction that loads a json file and redirects course name 
+    A function that loads a json file and redirects course name 
     to its identifier.
 
     Inputs:
@@ -199,8 +199,6 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
 
     url_queue = queue.Queue()
-
-    # Parsing through starting_url for URL's and seeding url_queue
 
     parent_url, soup = process(starting_url)
     soup_links = soup.find_all("a")
