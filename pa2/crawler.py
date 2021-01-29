@@ -74,22 +74,40 @@ def parse(div_tags, index):
     '''
     regex = r'[a-zA-Z][-a-zA-Z0-9]*'
     regex_class = r'[\w-]+'
-    
-    for div_tag in div_tags:
-        p_tags = div_tag.find_all("p")
-        for p_tag in p_tags:
-            if p_tag.has_attr('class') and (p_tag['class'][0] == 'courseblocktitle' or p_tag['class'][0] == 'courseblock subsequence'):
-                word_list = re.findall(regex_class, p_tag.text)
-                class_name = ' '.join([str(elem) for elem in word_list[:2]])
-                if p_tag["class"][0] == "courseblocktitle":
-                    class_name = ' '.join([str(elem) for elem in word_list[:2]])
-                    if '-' in class_name:
-                        parse_seq(class_name, word_list, index)
-                        continue
-                    word_list = re.findall(regex, p_tag.text)
-                    update_index(word_list, index, class_name)
+    classes = []
 
-def update_index(word_list, index, class_name):
+    for div_tag in div_tags:
+        if div_tag.has_attr('class') and div_tag['class'][0] == 'courseblock':
+            p_tags = div_tag.find_all("p")
+            course = {}
+            for p in p_tags:
+                if p.has_attr('class'):
+                    if p['class'][0] == "courseblocktitle":
+                        title = re.findall(regex_class, p.text)
+                        course['title'] = ' '.join([str(elem) for elem in title[:2]])
+                        course['name'] = re.findall(regex, p.text)
+                    elif p['class'][0] == "courseblockdesc":
+                        desc = re.findall(regex_class, p.text)
+                        course['desc'] = desc
+            word_list = course['name'] + course['desc']
+            if '-' in course['title']:
+                parse_seq(course['title'], word_list, index)
+            else:
+                update_index(course['title'], word_list, index)
+                
+    # for div_tag in div_tags:
+    #     p_tags = div_tag.find_all("p")
+    #     for p_tag in p_tags:
+    #         if p_tag.has_attr('class') and p_tag['class'][0] == 'courseblockdesc': #(p_tag['class'][0] == 'courseblocktitle' or p_tag['class'][0] == 'courseblock subsequence'):
+    #             print(p_tag)
+    #             word_list = re.findall(regex_class, p_tag.text)
+    #             class_name = ' '.join([str(elem) for elem in word_list[:2]])
+    #             if '-' in class_name:
+    #                 parse_seq(class_name, word_list, index)
+    #                 continue
+    #             update_index(word_list, index, class_name)
+
+def update_index(class_name, word_list, index):
     '''
     Updates the output index
 
@@ -104,7 +122,8 @@ def update_index(word_list, index, class_name):
             if word not in index:
                 index[word] = [class_name]
             else:
-                index[word].append(class_name)
+                if class_name not in index[word]:
+                    index[word].append(class_name)
 
 
 def parse_seq(class_name, word_list, index):
@@ -140,7 +159,7 @@ def process_links(parent_url, soup_links, processed_links, url_queue, count = 0,
     for link in soup_links:
         link = link.get('href')
         if link is not None:
-            absolute_link = absolute(parent_url, link)
+            absolute_link = util.convert_if_relative_url(parent_url, link)
             
             if util.is_url_ok_to_follow(absolute_link, limiting_domain):
                 if count < num_pages_to_crawl and absolute_link not in processed_links:
@@ -180,20 +199,20 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
     parent_url, soup = process(starting_url)
     soup_links = soup.find_all("a")
-    count = process_links(parent_url, soup_links, processed_links, url_queue)
+    count = process_links(parent_url, soup_links, processed_links, url_queue, count = count)
     
     while not url_queue.empty():
         url = url_queue.get()
         parent_url, soup = process(url)
 
         # Determining and appending course subsequence courses
-        div_tags = soup.find_all("div", class_=("courseblock main" or "courseblock subsequence"))
-        div_tags_subsequence = []
-        for div_tag in div_tags:
-            subsequence = util.find_sequence(div_tag)
-            if subsequence != []:
-                div_tags_subsequence.append(subsequence[0])
-        div_tags += div_tags_subsequence
+        # div_tags = soup.find_all("div", class_=("courseblock main" or "courseblock subsequence"))
+        # div_tags_subsequence = []
+        # for div_tag in div_tags:
+        #     subsequence = util.find_sequence(div_tag)
+        #     if subsequence != []:
+        #         div_tags_subsequence.append(subsequence[0])
+        # div_tags += div_tags_subsequence
 
         # Parsing through the webpage and processing URL's
         links = soup.find_all("a")
@@ -239,7 +258,7 @@ if __name__ == "__main__":
     # go(num_pages_to_crawl, course_map_filename, index_filename)
     index = {}
     processed_links = set()
-    
+    count = 1
     starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
                     "/12200-1/new.collegecatalog.uchicago.edu/index.html")
     limiting_domain = "classes.cs.uchicago.edu"
@@ -251,29 +270,25 @@ if __name__ == "__main__":
 
     parent_url, soup = process(starting_url)
     soup_links = soup.find_all("a")
-    count = process_links(parent_url, soup_links, processed_links, url_queue)
+    count = process_links(parent_url, soup_links, processed_links, url_queue, count = count)
     
     while not url_queue.empty():
         url = url_queue.get()
         parent_url, soup = process(url)
 
         # Determining and appending course subsequence courses
-        div_tags = soup.find_all("div", class_=("courseblock main" or "courseblock subsequence"))
-        div_tags_subsequence = []
-        for div_tag in div_tags:
-            subsequence = util.find_sequence(div_tag)
-            if subsequence != []:
-                div_tags_subsequence.append(subsequence[0])
-        div_tags += div_tags_subsequence
+        
 
         # Parsing through the webpage and processing URL's
         links = soup.find_all("a")
         count = process_links(url, links, processed_links, url_queue, count = count)
 
         # Indexing words
+        div_tags = soup.find_all("div")
         parse(div_tags, index)
 
-    print(index["hindu"])
+    print(index['calculus'])
+
 
 
     
