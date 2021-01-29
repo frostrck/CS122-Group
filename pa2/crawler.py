@@ -147,7 +147,7 @@ def parse_seq(class_name, word_list, index, course_map_filename):
         update_index(course_id,word_list, index)
 
 
-def process_links(parent_url, soup_links, processed_links, url_queue, count = 0, num_pages_to_crawl = 1000):
+def process_links(parent_url, soup_links, limiting_domain, processed_links, url_queue, count = 0, num_pages_to_crawl = 1000):
     '''
     Queues a link for processing and accounts for the processing of the URL
 
@@ -204,82 +204,50 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
     parent_url, soup = process(starting_url)
     soup_links = soup.find_all("a")
-    count = process_links(parent_url, soup_links, processed_links, url_queue, count = count)
+    count = process_links(parent_url, soup_links, limiting_domain, processed_links, url_queue, count = count)
     
     while not url_queue.empty():
         url = url_queue.get()
         parent_url, soup = process(url)
 
         links = soup.find_all("a")
-        count = process_links(url, links, processed_links, url_queue, count = count)
+        count = process_links(url, links, limiting_domain, processed_links, url_queue, count = count)
 
         div_tags = soup.find_all("div")
-        parse(div_tags, index)
+        parse(div_tags, index, course_map_filename)
+    
+    sorted_keys = sorted(index.keys(), key=lambda x:x.lower())
+    lines = []
+    for key in sorted_keys:
+        num_list = index[key]
+        for num in num_list:
+            lines.append(str(num) + ' | ' + key)
+
+    with open(index_filename, 'w') as f:
+        for line in lines:
+            f.write(line + '\n')
 
 
 
 
 
 if __name__ == "__main__":
-    # usage = "python3 crawl.py <number of pages to crawl>"
-    # args_len = len(sys.argv)
-    #course_map_filename = "course_map.json"
-    # index_filename = "catalog_index.csv"
-    # if args_len == 1:
-    #     num_pages_to_crawl = 1000
-    # elif args_len == 2:
-    #     try:
-    #         num_pages_to_crawl = int(sys.argv[1])
-    #     except ValueError:
-    #         print(usage)
-    #         sys.exit(0)
-    # else:
-    #     print(usage)
-    #     sys.exit(0)
-
-    # go(num_pages_to_crawl, course_map_filename, index_filename)
-    index = {}
-    processed_links = set()
-    count = 1
-    starting_url = ("http://www.classes.cs.uchicago.edu/archive/2015/winter"
-                    "/12200-1/new.collegecatalog.uchicago.edu/index.html")
-    limiting_domain = "classes.cs.uchicago.edu"
-
-    # Creating queue object to store URL's
-    url_queue = queue.Queue()
+    usage = "python3 crawl.py <number of pages to crawl>"
+    args_len = len(sys.argv)
     course_map_filename = "course_map.json"
+    index_filename = "catalog_index.csv"
+    if args_len == 1:
+        num_pages_to_crawl = 1000
+    elif args_len == 2:
+        try:
+            num_pages_to_crawl = int(sys.argv[1])
+        except ValueError:
+            print(usage)
+            sys.exit(0)
+    else:
+        print(usage)
+        sys.exit(0)
 
-    # Parsing through starting_url for URL's and seeding url_queue
-
-    parent_url, soup = process(starting_url)
-    soup_links = soup.find_all("a")
-    count = process_links(parent_url, soup_links, processed_links, url_queue, count = count)
-    
-
-    while not url_queue.empty():
-        url = url_queue.get()
-        parent_url, soup = process(url)
-
-        # Determining and appending course subsequence courses
-        
-
-        # Parsing through the webpage and processing URL's
-        links = soup.find_all("a")
-        count = process_links(url, links, processed_links, url_queue, count = count)
-
-        div_tags = soup.find_all("div")
-        parse(div_tags, index, course_map_filename)
-
-
-    sorted_list = sorted(index.keys(), key=lambda x:x.lower())
-    lines = []
-    for ele in sorted_list:
-        num_list = index[ele]
-        for num in num_list:
-            lines.append(str(num) + ' | ' + ele)
-
-    with open('fileName.csv', 'w') as f:
-        for line in lines:
-            f.write(line + '\n')
+    go(num_pages_to_crawl, course_map_filename, index_filename)
 
 
