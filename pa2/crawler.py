@@ -69,20 +69,21 @@ def parse(div_tags, index):
         div_tags (bs4 ResultSet, lst): div tags with "courseblock main" attribute
         index (dict): index to be updated
     '''
-    regex = r'[\w-]+'
+    regex = r'[a-zA-Z][-a-zA-Z0-9]*'
+    regex_class = r'[\w-]+'
     
     for div_tag in div_tags:
         p_tags = div_tag.find_all("p")
         for p_tag in p_tags:
-            if p_tag.has_attr('class'): # and (p_tag['class'][0] in ('courseblocktitle', 'courseblock subsequence')
-                word_list = re.findall(regex, p_tag.text)
+            if p_tag.has_attr('class') and (p_tag['class'][0] == 'courseblocktitle' or p_tag['class'][0] == 'courseblock subsequence'):
+                word_list = re.findall(regex_class, p_tag.text)
+                class_name = ' '.join([str(elem) for elem in word_list[:2]])
                 if p_tag["class"][0] == "courseblocktitle":
                     class_name = ' '.join([str(elem) for elem in word_list[:2]])
-                if '-' in class_name:
-                    parse_seq(class_name, word_list, index)
-                    continue
-
-                else:
+                    if '-' in class_name:
+                        parse_seq(class_name, word_list, index)
+                        continue
+                    word_list = re.findall(regex, p_tag.text)
                     update_index(word_list, index, class_name)
 
 def update_index(word_list, index, class_name):
@@ -110,7 +111,7 @@ def parse_seq(class_name, word_list, index):
     for i, word in enumerate(seq_name):
         num = seq_name[i]
         if num.isnumeric():
-            subsequence = dept + '' + num
+            subsequence = dept + ' ' + num
             seq.append(subsequence)
     
     for course in seq:
@@ -269,7 +270,7 @@ if __name__ == "__main__":
             parse(div_tags, index)
         
     
-    print(index)
+    print(list(index.values())[1])
 
 
     
