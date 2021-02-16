@@ -19,7 +19,12 @@ INDEX_IGNORE = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
                     'topics', 'units', 'we', 'were', 'which', 'will', 'with',
                     'yet'])
 
+### GRADER COMMENT: Lines should be < 80 chars
+### PENALTY: -2 points
 
+### GRADER COMMENT: Function and class definitions 
+###  should be separated by two blank lines
+### PENALTY: -2 points
 def process(url):
     '''
     Takes in an url and processes it into ansolute url and returns its soup.
@@ -108,6 +113,8 @@ def update_index(class_name, word_list, index):
     Returns:
         None
     '''
+    ### GRADER COMMENT: used dictionary of lists not sets
+    ### PENALTY: -2 points
     word_list = [word.lower() for word in word_list]
     for word in word_list:
         if word not in INDEX_IGNORE:
@@ -146,7 +153,8 @@ def parse_seq(class_name, word_list, index, course_map_filename):
         course_id = course_identifier(course, course_map_filename)
         update_index(course_id,word_list, index)
 
-
+### GRADER COMMENT: num_pages_to_crawl shouldn't be hardcoded
+### PENALTY: -2 points
 def process_links(parent_url, soup_links, limiting_domain, processed_links, url_queue, count = 0, num_pages_to_crawl = 1000):
     '''
     Queues a link for processing and accounts for the processing of the URL
@@ -168,9 +176,12 @@ def process_links(parent_url, soup_links, limiting_domain, processed_links, url_
             absolute_link = util.convert_if_relative_url(parent_url, link)
             
             if util.is_url_ok_to_follow(absolute_link, limiting_domain):
+                ### GRADER COMMENT: visits num_pages_to_crawl-1 pages
+                ### PENALTY: -1 point
                 if count < num_pages_to_crawl and absolute_link not in processed_links:
                     url_queue.put(absolute_link)
                     processed_links.add(absolute_link)
+                    print(str(count) + absolute_link)
                     count += 1
                 elif count == num_pages_to_crawl:
                     break
@@ -199,7 +210,8 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
 
     url_queue = queue.Queue()
-
+    ### GRADER COMMENT: starting_url not added to queue
+    ### PENALTY: -2 points
     parent_url, soup = process(starting_url)
     soup_links = soup.find_all("a")
     count = process_links(parent_url, soup_links, limiting_domain, processed_links, url_queue, count = count)

@@ -1,0 +1,45 @@
+Points:
+    - Code structure and style:
+        Points Possible: 20
+        Points Obtained: 14
+
+    - Crawling, FIFO order:
+        Points Possible: 8
+        Points Obtained: 8
+
+    - Crawling, Visit url once:
+        Points Possible: 20
+        Points Obtained: 18
+
+    - Crawling, Start and stop:
+        Points Possible: 4
+        Points Obtained: 3
+
+    - Crawling, Extract urls:
+        Points Possible: 8
+        Points Obtained: 8
+
+    - Indexing, Interleaving:
+        Points Possible: 7
+        Points Obtained: 7
+
+    - Indexing, Basic processing:
+        Points Possible: 11
+        Points Obtained: 11
+
+    - Indexing, Extract words:
+        Points Possible: 13
+        Points Obtained: 13
+
+    - Indexing, Process subsequences:
+        Points Possible: 13
+        Points Obtained: 13
+
+    - Indexing, Maintain and write index:
+        Points Possible: 16
+        Points Obtained: 14
+
+Total Points: 109 / 120
+
+Comments: >
+    None
